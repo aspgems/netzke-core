@@ -33,7 +33,7 @@ module Netzke
       endpoint :deliver_component do |params|
         cache = params[:cache].split(",") # array of cached xtypes
         component_name = params[:name].underscore.to_sym
-        component = components[component_name] && component_instance(component_name)
+        component = components[component_name] && component_instance(component_name, params)
 
         if component
           # inform the component that it's being loaded
@@ -53,6 +53,17 @@ module Netzke
     end # included
 
     module ClassMethods
+      # Defines attributes that this component may accept from the request
+      def attr_request(*args)
+        current_attrs = read_inheritable_attribute(:request_attributes) || []
+        current_attrs.concat args
+        write_inheritable_attribute(:request_attributes, current_attrs.uniq)
+      end
+
+      # All attributes that this component may accept from the request
+      def request_attributes
+        read_inheritable_attribute(:request_attributes) || []
+      end
 
       # Defines a nested component.
       def component(name, config = {}, &block)
@@ -154,7 +165,15 @@ module Netzke
           component_class = constantize_class_name(component_class_name)
           raise ArgumentError, "Unknown constant #{component_class_name}" if component_class.nil?
 
-          instance_config = weak_children_config.merge(component_config).merge(strong_config).merge(:name => cmp)
+          # Recover needed values from the request params
+          request_attributes = component_class.request_attributes
+          params = strong_config.slice(*request_attributes.map(&:jsonify)).to_hash # Work with a plain Hash
+          # Set the proper type (String|Symbol) of each attribute, as it was defined in attr_request
+	      request_attributes.each do |attr|
+            json_attr = attr.to_s.jsonify
+            params[attr] = params.delete(json_attr) if params.key?(json_attr)
+          end
+          instance_config = weak_children_config.merge(component_config).merge(params).merge(:name => cmp)
 
           composite = component_class.new(instance_config, composite) # params: config, parent
         end
