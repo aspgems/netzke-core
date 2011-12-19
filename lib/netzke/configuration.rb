@@ -91,6 +91,11 @@ module Netzke
     end
 
     module InstanceMethods
+      # Config passed in component instantiation
+      def passed_config
+        @passed_config
+      end
+
       # Default config - before applying any passed configuration
       def default_config
         @default_config ||= {}.merge(weak_default_options).merge(self.class.default_instance_config).merge(self.class.read_inheritable_attribute(:default_config) || {})
@@ -98,7 +103,7 @@ module Netzke
 
       # Static, hardcoded config. Consists of default values merged with config that was passed during instantiation
       def initial_config
-        @initial_config ||= default_config.merge(weak_initial_options).merge(@passed_config)
+        @initial_config ||= default_config.merge(weak_initial_options).merge(passed_config)
       end
 
       # Config that is not overridden by parents and sessions
@@ -123,7 +128,7 @@ module Netzke
       # Translates into something like this:
       #
       #     default_config.
-      #     deep_merge(@passed_config).
+      #     deep_merge(passed_config).
       #     deep_merge(persistent_options).
       #     deep_merge(strong_parent_config).
       #     deep_merge(strong_session_config)
