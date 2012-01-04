@@ -2,26 +2,24 @@ class NetzkeController < ApplicationController
 
   # Action for Ext.Direct RPC calls
   def direct
-    result=""
+    result=[]
     error=false
     if params['_json'] # this is a batched request
       params['_json'].each do |batch|
-        result += result.blank? ? '[' : ', '
         begin
-          result += invoke_endpoint(batch[:act], batch[:method].underscore, batch[:data].first, batch[:tid])
+          result << invoke_endpoint(batch[:act], batch[:method].underscore, batch[:data].first, batch[:tid])
         rescue Exception  => e
           Rails.logger.error "!!! Netzke: Error invoking endpoint: #{batch[:act]} #{batch[:method].underscore} #{batch[:data].inspect} #{batch[:tid]}\n"
           Rails.logger.error e.message
           Rails.logger.error e.backtrace.join("\n")
           error=true
-          break;
+          break
         end
       end
-      result+=']'
     else # this is a single request
       result=invoke_endpoint params[:act], params[:method].underscore, params[:data].first, params[:tid]
     end
-    render :text => result, :layout => false, :status => error ? 500 : 200
+    render :json => result.to_json, :status => error ? 500 : 200
   end
 
   # Action used by non-Ext.Direct (Touch) components
@@ -73,7 +71,7 @@ class NetzkeController < ApplicationController
         :action => component_name,
         :method => action,
         :result => result.present? && result.l || {}
-      }.to_json
+      }
     end
 
     # Main dispatcher of old-style (Sencha Touch) HTTP requests. The URL contains the name of the component,
@@ -86,7 +84,7 @@ class NetzkeController < ApplicationController
       # We render text/plain, so that the browser never modifies our response
       response.headers["Content-Type"] = "text/plain; charset=utf-8"
 
-      render :text => component_instance.invoke_endpoint(sub_components.join("__"), params), :layout => false
+      render :json => component_instance.invoke_endpoint(sub_components.join("__"), params).to_json, :layout => false
     end
 
 end
