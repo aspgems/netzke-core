@@ -84,7 +84,7 @@ class NetzkeController < ApplicationController
       # We render text/plain, so that the browser never modifies our response
       response.headers["Content-Type"] = "text/plain; charset=utf-8"
 
-      render :json => component_instance.invoke_endpoint(sub_components.join("__"), params).to_json, :layout => false
+      render :text => component_instance.invoke_endpoint(sub_components.join("__"), params), :layout => false
     end
 
 end
