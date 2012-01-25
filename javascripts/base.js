@@ -23,7 +23,7 @@ Netzke.deprecationWarning = function(msg){
 Netzke.warning = Netzke.deprecationWarning;
 
 Netzke.exception = function(msg) {
-  throw("Netzke: " + msg);
+  Ext.Error.raise({msg: msg});
 };
 
 // Used in testing
@@ -67,7 +67,7 @@ Netzke.aliasMethodChain = function(klass, method, feature) {
 Netzke.cache = [];
 
 Netzke.componentNotInSessionHandler = function() {
-  throw "Netzke: component not in Rails session. Define Netzke.componentNotInSessionHandler to handle this.";
+  Netzke.exception("Netzke: component not in Rails session. Define Netzke.componentNotInSessionHandler to handle this.");
 };
 
 Netzke.classes.Core.Mixin = {};
@@ -90,7 +90,7 @@ Netzke.componentMixin = Ext.applyIf(Netzke.classes.Core.Mixin, {
         if (c.netzkeComponent) {
           var cmpName = c.netzkeComponent,
               cmpCfg = this.netzkeComponents[cmpName.camelize(true)];
-          if (!cmpCfg) throw "Netzke: unknown component reference " + cmpName;
+          if (!cmpCfg) Netzke.exception("Netzke: unknown component reference " + cmpName);
           a[i] = Ext.apply(cmpCfg, c);
           delete a[i].netzkeComponent; // not needed any longer
         } else if (c.items) this.detectComponents(c.items);
@@ -160,7 +160,7 @@ Netzke.componentMixin = Ext.applyIf(Netzke.classes.Core.Mixin, {
           if (childComponent) {
             childComponent.bulkExecute(instructions[instr]);
           } else {
-            throw "Netzke: Unknown method or child component '" + instr +"' in component '" + this.id + "'"
+            Netzke.exception("Netzke: Unknown method or child component '" + instr +"' in component '" + this.id + "'")
           }
         }
       }

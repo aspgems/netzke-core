@@ -166,15 +166,25 @@ Ext.apply(Netzke.classes.Core.Mixin, {
 
         scope = scope || that;
         Netzke.providers[this.id][intp.camelize(true)].call(scope, arg, function(result, remotingEvent) {
-          if(remotingEvent.message) {
-            console.error("RPC event indicates an error: ", remotingEvent);
-            throw new Error(remotingEvent.message);
-          }
+          var callbackErrorMessage = null;
           that.bulkExecute(result); // invoke the endpoint result on the calling component
           if(typeof callback == "function") {
-            callback.call(scope, that.latestResult); // invoke the callback on the provided scope, or on the calling component if no scope set. Pass latestResult to callback
+            try {
+              callback.call(scope, that.latestResult); // invoke the callback on the provided scope, or on the calling component if no scope set. Pass latestResult to callback
+            }catch(err) {
+              callbackErrorMessage = err;
+            }
           }
           Netzke.runningRequests--;
+          if(remotingEvent.message) {
+            if(console) console.error("RPC event indicates an error: ", remotingEvent);
+            scope.netzkeFeedback({msg: remotingEvent.message, level: "Error"});
+            Netzke.exception(remotingEvent.message);
+          }
+          else if(callbackErrorMessage) {
+            if(console) console.error("Error in callback of RPC call: ", callbackErrorMessage);
+            Netzke.exception(callbackErrorMessage);
+          }
         });
       }
     }, this);
@@ -240,7 +250,7 @@ Ext.apply(Netzke.classes.Core.Mixin, {
       Ext.each(a, function(el, i){
         if (Ext.isObject(el)) {
           if (el.action) {
-            if (!this.actions[el.action.camelize(true)]) throw "Netzke: action '"+el.action+"' not defined";
+            if (!this.actions[el.action.camelize(true)]) Netzke.exception("Netzke: action '"+el.action+"' not defined");
             a[i] = this.actions[el.action.camelize(true)];
             delete(el);
           } else {
@@ -282,13 +292,17 @@ Ext.apply(Netzke.classes.Core.Mixin, {
 
     // Show loading mask if possible
     var containerEl = (containerCmp || this).getEl();
+    var loadMaskCmp = null;
     if (this.componentLoadMask && containerEl){
-      storedConfig.loadMaskCmp = new Ext.LoadMask(containerEl, this.componentLoadMask);
-      storedConfig.loadMaskCmp.show();
+      loadMaskCmp = new Ext.LoadMask(containerEl, this.componentLoadMask);
+      loadMaskCmp.show();
     }
 
     // do the remote API call
-    this.deliverComponent(serverParams);
+    this.deliverComponent(serverParams, function() {
+      if (loadMaskCmp)
+        loadMaskCmp.hide().destroy();
+    });
   },
 
   // DEPRECATED in favor or loadNetzkeComponent
@@ -305,11 +319,6 @@ Ext.apply(Netzke.classes.Core.Mixin, {
     // retrieve the loading config for this component
     var storedConfig = this.componentsBeingLoaded[config.name] || {};
     delete this.componentsBeingLoaded[config.name];
-
-    if (storedConfig.loadMaskCmp) {
-      storedConfig.loadMaskCmp.hide();
-      storedConfig.loadMaskCmp.destroy();
-    }
 
     var componentInstance = Ext.createByAlias(config.alias, config);
 
@@ -334,13 +343,7 @@ Ext.apply(Netzke.classes.Core.Mixin, {
   },
 
   componentDeliveryFailed: function(params) {
-    var storedConfig = this.componentsBeingLoaded[params.componentName] || {};
     delete this.componentsBeingLoaded[params.componentName];
-
-    if (storedConfig.loadMaskCmp) {
-      storedConfig.loadMaskCmp.hide();
-      storedConfig.loadMaskCmp.destroy();
-    }
 
     this.netzkeFeedback({msg: params.msg, level: "Error"});
   },
@@ -468,7 +471,7 @@ Ext.apply(Netzke.classes.Core.Mixin, {
       var action = this.actions[actionName];
       var customHandler = action.initialConfig.customHandler;
       var methodName = (customHandler && customHandler.camelize(true)) || "on" + actionName.camelize();
-      if (!this[methodName]) {throw "Netzke: action handler '" + methodName + "' is undefined"}
+      if (!this[methodName]) {Netzke.exception("Netzke: action handler '" + methodName + "' is undefined")}
 
       // call the handler passing it the triggering component
       this[methodName](comp);
@@ -480,7 +483,7 @@ Ext.apply(Netzke.classes.Core.Mixin, {
     // If firing corresponding event doesn't return false, call the handler
     if (this.fireEvent(tool.id+'click')) {
       var methodName = "on"+tool.camelize();
-      if (!this[methodName]) {throw "Netzke: handler for tool '"+tool+"' is undefined"}
+      if (!this[methodName]) {Netzke.exception("Netzke: handler for tool '"+tool+"' is undefined")}
       this[methodName]();
     }
   },
