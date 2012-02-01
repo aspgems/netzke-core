@@ -177,12 +177,12 @@ Ext.apply(Netzke.classes.Core.Mixin, {
           }
           Netzke.runningRequests--;
           if(remotingEvent.message) {
-            if(Ext.isDefined(console)) console.error("RPC event indicates an error: ", remotingEvent);
+            if(Ext.isDefined(Ext.global.console)) Ext.global.console.error("RPC event indicates an error: ", remotingEvent);
             scope.netzkeFeedback({msg: remotingEvent.message, level: "Error"});
             Netzke.exception(remotingEvent.message);
           }
           else if(callbackErrorMessage) {
-            if(Ext.isDefined(console)) console.error("Error in callback of RPC call: ", callbackErrorMessage);
+            if(Ext.isDefined(Ext.global.console)) Ext.global.console.error("Error in callback of RPC call: ", callbackErrorMessage);
             Netzke.exception(callbackErrorMessage);
           }
         });
