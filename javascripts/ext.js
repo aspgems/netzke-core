@@ -320,11 +320,13 @@ Ext.apply(Netzke.classes.Core.Mixin, {
     var storedConfig = this.componentsBeingLoaded[config.name] || {};
     delete this.componentsBeingLoaded[config.name];
 
+    var containerCmp = storedConfig.container;
+    if (containerCmp && !storedConfig.append)
+      containerCmp.removeAll();
+
     var componentInstance = Ext.createByAlias(config.alias, config);
 
-    if (storedConfig.container) {
-      var containerCmp = storedConfig.container;
-      if (!storedConfig.append) containerCmp.removeAll();
+    if (containerCmp) {
       containerCmp.add(componentInstance);
 
       if (containerCmp.isVisible()) {
