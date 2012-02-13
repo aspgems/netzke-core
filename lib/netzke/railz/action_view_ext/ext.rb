@@ -8,7 +8,9 @@ module Netzke
 
           def netzke_ext_css_include(params)
             # ExtJS base
-            res = ["#{Netzke::Core.ext_uri}/resources/css/ext-all"]
+            theme = params[:theme] || params[:ext_theme]
+            theme = theme.present? ? "ext-all-#{theme.to_s}" : 'ext-all'
+            res = ["#{Netzke::Core.ext_uri}/resources/css/#{theme}"]
 
             # Netzke-related dynamic css
             res << "/netzke/ext"

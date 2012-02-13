@@ -20,7 +20,6 @@ module Netzke
       #     <%= netzke_init :platform => :touch %>
       def netzke_init(params = {})
         Netzke::Core.platform = params[:platform] || :ext
-        theme = params[:theme] || params[:ext_theme]
 
         raw([netzke_css_include(params), netzke_css(params), netzke_js_include(params), netzke_js(params)].join("\n"))
       end
