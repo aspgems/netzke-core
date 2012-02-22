@@ -127,6 +127,8 @@ Ext.apply(Netzke.classes.Core.Mixin, {
 
     this.processPlugins();
 
+    this.addEvents('componentload');
+
     // This is where the references to different callback functions will be stored
     this.callbackHash = {};
 
