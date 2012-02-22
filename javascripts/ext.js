@@ -501,5 +501,4 @@ Ext.apply(Netzke.classes.Core.Mixin, {
     }
   },
 
-  onComponentLoad:Ext.emptyFn // gets overridden
 });
