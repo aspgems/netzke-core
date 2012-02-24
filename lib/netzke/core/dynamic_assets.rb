@@ -15,7 +15,7 @@ module Netzke
             res << f.read
           end
 
-          defined?(::Rails) && ::Rails.env.production? ? res.strip_js_comments : res
+          res #defined?(::Rails) && ::Rails.env.production? ? res.strip_js_comments : res
         end
 
         def touch_css
@@ -44,7 +44,7 @@ module Netzke
             res << f.read
           end
 
-          defined?(::Rails) && ::Rails.env.production? ? res.strip_js_comments : res
+          res #defined?(::Rails) && ::Rails.env.production? ? res.strip_js_comments : res
         end
 
         def ext_css
