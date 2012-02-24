@@ -211,13 +211,13 @@ Netzke.cache.push('#{js_xtype}');
 
       # Returns all included JavaScript files as a string
       def js_included
-        res = ""
+        res = {}
 
         # Prevent re-including code that was already included by the parent
         # (thus, only include those JS files when include_js was defined in the current class, not in its ancestors)
         ((singleton_methods(false).map(&:to_sym).include?(:include_js) ? include_js : []) + js_included_files).each do |path|
           f = File.new(path)
-          res << f.read << "\n"
+          res[path] = f.read
         end
 
         res
@@ -342,9 +342,16 @@ Netzke.cache.push('#{js_xtype}');
       # All the JS-code required by this instance of the component to be instantiated in the browser.
       # It includes JS-classes for the parents, non-lazy-loaded child components, and itself.
       def js_missing_code(cached = [])
+        included = ActiveSupport::OrderedHash.new
         code = dependency_classes.inject("") do |r,k|
-          cached.include?(k.js_xtype) ? r : r + k.js_code#.strip_js_comments
+          if cached.include?(k.js_xtype)
+            r
+          else
+            included.merge!(k.js_included)
+            r + k.js_class#.strip_js_comments
+          end
         end
+        code = included.values.join("\n") + code
         code.blank? ? nil : code
       end
 
