@@ -4,8 +4,8 @@
 es:
   localized_panel:
     title: Panel Localizada
-    property_one: Primera propriedad
-    property_two: Segunda propriedad
+    property_one: Primera propiedad
+    property_two: Segunda propiedad
     action_two: Segunda acción
     actions:
       action_one: Primera acción

@@ -13,7 +13,7 @@ Scenario: LocalizedPanel should be available in 2 languages
 
   When I go to the "es" version of the LocalizedPanel page
   Then I should see "Panel Localizada"
-  And I should see "Primera propriedad, Segunda propriedad"
+  And I should see "Primera propiedad, Segunda propiedad"
   And I should see "Primera acción"
   And I should see "Segunda acción"
 
@@ -22,7 +22,7 @@ Scenario: LocalizedPanel should be available in 2 languages
 
   When I go to the "es" version of the ExtendedLocalizedPanel page
   Then I should see "Panel Localizada"
-  And I should see "Primera propriedad, Segunda propriedad"
+  And I should see "Primera propiedad, Segunda propiedad"
   And I should see "Action one"
   And I should see "Segunda acción"
 
