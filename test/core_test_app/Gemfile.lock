@@ -68,6 +68,7 @@ GEM
       treetop (~> 1.4.8)
     mime-types (1.17.2)
     multi_json (1.1.0)
+    netzke-persistence (0.1.0)
     nokogiri (1.5.2)
     polyglot (0.3.3)
     rack (1.3.6)
@@ -141,6 +142,7 @@ DEPENDENCIES
   cucumber-rails
   database_cleaner
   launchy
+  netzke-persistence
   rails (= 3.1.4)
   rspec-rails
   spork
