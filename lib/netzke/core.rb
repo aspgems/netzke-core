@@ -69,6 +69,10 @@ module Netzke
     mattr_accessor :js_direct_max_retries
     @@js_direct_max_retries = 0
 
+    # Whether to use the ExtJS debug files or not
+    mattr_accessor :js_debug
+    @@js_debug = Rails.env.development?
+
     mattr_accessor :with_icons
 
     mattr_accessor :persistence_manager_class
