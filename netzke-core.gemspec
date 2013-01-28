@@ -5,12 +5,12 @@
 
 Gem::Specification.new do |s|
   s.name = "netzke-core"
-  s.version = "0.7.5"
+  s.version = "0.7.7"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["NomadCoder"]
-  s.date = "2012-03-06"
-  s.description = "Allows building DRY ExtJS/Rails applications by enabling modular development"
+  s.authors = ["nomadcoder"]
+  s.date = "2012-10-20"
+  s.description = "Allows building DRY Sencha Ext JS Ruby on Rails applications by enabling modular development"
   s.email = "nmcoder@gmail.com"
   s.extra_rdoc_files = [
     "LICENSE",
@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   ]
   s.files = [
     ".autotest",
+    ".travis.yml",
     "CHANGELOG.rdoc",
     "LICENSE",
     "Manifest",
@@ -25,6 +26,7 @@ Gem::Specification.new do |s|
     "Rakefile",
     "TODO.md",
     "app/controllers/netzke_controller.rb",
+    "config/ci/before-travis.sh",
     "init.rb",
     "install.rb",
     "javascripts/base.js",
@@ -71,6 +73,7 @@ Gem::Specification.new do |s|
     "netzke-core.gemspec",
     "stylesheets/core.css",
     "test/core_test_app/.gitignore",
+    "test/core_test_app/.powrc",
     "test/core_test_app/.rvmrc",
     "test/core_test_app/Gemfile",
     "test/core_test_app/Gemfile.lock",
@@ -150,6 +153,7 @@ Gem::Specification.new do |s|
     "test/core_test_app/config/application.rb",
     "test/core_test_app/config/boot.rb",
     "test/core_test_app/config/database.yml",
+    "test/core_test_app/config/database.yml.travis",
     "test/core_test_app/config/environment.rb",
     "test/core_test_app/config/environments/development.rb",
     "test/core_test_app/config/environments/production.rb",
@@ -192,6 +196,8 @@ Gem::Specification.new do |s|
     "test/core_test_app/features/support/env.rb",
     "test/core_test_app/features/support/paths.rb",
     "test/core_test_app/features/touch.feature",
+    "test/core_test_app/gemfiles/rails3_1.gemfile",
+    "test/core_test_app/gemfiles/rails3_2.gemfile",
     "test/core_test_app/lib/tasks/.gitkeep",
     "test/core_test_app/public/404.html",
     "test/core_test_app/public/422.html",
@@ -212,30 +218,26 @@ Gem::Specification.new do |s|
     "test/core_test_app/spec/spec_helper.rb",
     "test/core_test_app/tmp/restart.txt",
     "test/core_test_app/vendor/plugins/.gitkeep",
-    "test/fixtures/roles.yml",
-    "test/fixtures/users.yml",
     "test/test_helper.rb",
     "test/unit/core_ext_test.rb",
     "test/unit/netzke_core_test.rb",
-    "test/unit/netzke_preference_test.rb",
     "uninstall.rb"
   ]
   s.homepage = "http://netzke.org"
-  s.post_install_message = "\n==========================================================\n\n           Thanks for installing netzke-core!\n\n  Home page:     http://netzke.org\n  Google Groups: http://groups.google.com/group/netzke\n  News:          http://twitter.com/netzke\n  Tutorials:     http://blog.writelesscode.com\n\n==========================================================\n\n"
   s.require_paths = ["lib"]
   s.rubygems_version = "1.8.10"
-  s.summary = "Build ExtJS/Rails components with minimum effort"
+  s.summary = "Build complex Sencha Ext JS Ruby on Rails components with minimum effort"
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<activesupport>, [">= 3.0.0"])
+      s.add_runtime_dependency(%q<activesupport>, [">= 3.1.0"])
     else
-      s.add_dependency(%q<activesupport>, [">= 3.0.0"])
+      s.add_dependency(%q<activesupport>, [">= 3.1.0"])
     end
   else
-    s.add_dependency(%q<activesupport>, [">= 3.0.0"])
+    s.add_dependency(%q<activesupport>, [">= 3.1.0"])
   end
 end
 

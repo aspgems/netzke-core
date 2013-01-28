@@ -1,6 +1,6 @@
 class Symbol
   def jsonify
-    self.to_s.camelize(:lower).to_sym
+    self.to_s.jsonify.to_sym
   end
 
   def l
@@ -13,5 +13,9 @@ class Symbol
 
   def component(config = {})
     config.merge(:netzke_component => self)
+  end
+
+  def to_cls_attr
+    "__#{self}__".to_sym
   end
 end

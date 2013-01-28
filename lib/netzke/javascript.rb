@@ -20,6 +20,23 @@ module Netzke
 
       class_attribute :js_included_files
       self.js_included_files = []
+
+      # Returns all JS method definitions in a hash
+      class_attribute :js_methods_attr
+      self.js_methods_attr = {}
+
+      class_attribute :js_properties_attr
+      self.js_properties_attr = {}
+
+      # Returns all objects to be mixed in (as array of strings)
+      class_attribute :js_mixins_attr
+      self.js_mixins_attr = []
+
+      class_attribute :js_translated_properties_attr
+      self.js_translated_properties_attr = {}
+
+      class_attribute :js_base_class_attr
+      self.js_base_class_attr = 'Ext.panel.Panel'
     end
 
     module ClassMethods
@@ -32,7 +49,7 @@ module Netzke
       #
       # If called without parameters, returns the JS base class declared for the component.
       def js_base_class(class_name = nil)
-        class_name.nil? ? (read_inheritable_attribute(:js_base_class) || "Ext.panel.Panel") : write_inheritable_attribute(:js_base_class, class_name)
+        class_name.nil? ? self.js_base_class_attr : self.js_base_class_attr = class_name
       end
 
       # Use it to define a public method of the component's JavaScript class, e.g.:
@@ -46,14 +63,13 @@ module Netzke
       # This will effectively result in definition of a public method called +doSomething+ in the JavaScript class (note the conversion from underscore_name to camelCaseName).
       def js_method(name, definition = nil)
         definition = yield.l if block_given?
-        current_js_methods = read_clean_inheritable_hash(:js_methods)
-        current_js_methods.merge!(name => definition.l)
-        write_inheritable_attribute(:js_methods, current_js_methods)
+        current_js_methods = clean_class_attribute_hash(:js_methods_attr).dup
+        self.js_methods_attr = current_js_methods.merge(name => definition.l)
       end
 
       # Returns all JS method definitions in a hash
       def js_methods
-        read_clean_inheritable_hash(:js_methods)
+        clean_class_attribute_hash(:js_methods_attr)
       end
 
       # Use it to specify JS files to be loaded before this component's JS code. Useful when using external extensions required by this component.
@@ -72,7 +88,7 @@ module Netzke
       def js_include(*args)
         callr = caller.first
 
-        self.js_included_files += args.map{ |a| a.is_a?(Symbol) ? expand_js_include_path(a, callr) : a }
+        self.js_included_files |= args.map{ |a| a.is_a?(Symbol) ? expand_js_include_path(a, callr) : a }
       end
 
       # Used to define default properties of the JavaScript class, e.g.:
@@ -87,11 +103,10 @@ module Netzke
       # Note, that not all the configuration options can be defined on the prototype of the class. For example, defining +items+ on the prototype won't take any effect, so, +items+ should be passed as a configuration option at the moment of instantiation (see Netzke::Base#configuration and Netzke::Base#default_config).
       def js_properties(hsh = nil)
         if hsh.nil?
-          read_clean_inheritable_hash(:js_properties)
+          clean_class_attribute_hash(:js_properties_attr)
         else
-          current_js_properties = read_clean_inheritable_hash(:js_properties)
-          current_js_properties.merge!(hsh)
-          write_inheritable_attribute(:js_properties, current_js_properties)
+          current_js_properties = clean_class_attribute_hash(:js_properties_attr).dup
+          self.js_properties_attr = current_js_properties.merge(hsh)
         end
       end
 
@@ -100,11 +115,11 @@ module Netzke
       def js_property(name, value = nil)
         name = name.to_sym
         if value.nil?
-          (read_inheritable_attribute(:js_properties) || {})[name]
+          clean_class_attribute_hash(:js_properties_attr)[name]
         else
-          current_js_properties = read_clean_inheritable_hash(:js_properties)
+          current_js_properties = clean_class_attribute_hash(:js_properties_attr).dup
           current_js_properties[name] = value
-          write_inheritable_attribute(:js_properties, current_js_properties)
+          self.js_properties_attr = current_js_properties
         end
       end
 
@@ -122,9 +137,9 @@ module Netzke
       # TODO: make the name of the root property configurable
       def js_translate(*properties)
         if properties.empty?
-          read_clean_inheritable_hash(:js_translated_properties)
+          clean_class_attribute_hash(:js_translated_properties_attr)
         else
-          current_translated_properties = read_clean_inheritable_hash(:js_translated_properties)
+          current_translated_properties = clean_class_attribute_hash(:js_translated_properties_attr).dup
           properties.each do |p|
             if p.is_a?(Hash)
               # TODO: make it possible to nest translated objects
@@ -133,7 +148,7 @@ module Netzke
             end
           end
 
-          write_inheritable_attribute(:js_translated_properties, current_translated_properties)
+          self.js_translated_properties_attr = current_translated_properties
         end
       end
 
@@ -160,15 +175,15 @@ module Netzke
       # With no parameters, will assume :component_class_name_underscored.
       def js_mixin(*args)
         args << name.split("::").last.underscore.to_sym if args.empty? # if no args provided, component_class_underscored_name is assumed
-        current_mixins = read_clean_inheritable_array(:js_mixins) || []
+        current_mixins = clean_class_attribute_array(:js_mixins_attr)
         callr = caller.first
         args.each{ |a| current_mixins << (a.is_a?(Symbol) ? File.read(expand_js_include_path(a, callr)) : File.read(a))}
-        write_inheritable_attribute(:js_mixins, current_mixins)
+        self.js_mixins_attr = current_mixins
       end
 
       # Returns all objects to be mixed in (as array of strings)
       def js_mixins
-        read_clean_inheritable_array(:js_mixins) || []
+        clean_class_attribute_array(:js_mixins_attr)
       end
 
       # Builds this component's xtype
@@ -286,58 +301,57 @@ Netzke.cache.push('#{js_xtype}');
 
     end
 
-    module InstanceMethods
-      # The result of this method (a hash) is converted to a JSON object and passed as options
-      # to the constructor of our JavaScript class. Override it when you want to pass any extra configuration
-      # to the JavaScript side.
-      def js_config
-        {}.tap do |res|
-          # Unique id of the component
-          res[:id] = global_id
+    # The result of this method (a hash) is converted to a JSON object and passed as options
+    # to the constructor of our JavaScript class. Override it when you want to pass any extra configuration
+    # to the JavaScript side.
+    def js_config
+      {}.tap do |res|
+        # Unique id of the component
+        res[:id] = global_id
 
-          # Non-lazy-loaded components
-          comp_hash = {}
-          eager_loaded_components.each_pair do |comp_name, comp_config|
-            comp_instance = component_instance(comp_name.to_sym)
-            comp_instance.before_load
-            comp_hash[comp_name] = comp_instance.js_config
-          end
-
-          # Configuration for all of our non-lazy-loaded children specified here. We can refer to them in +items+ so they get instantiated by Ext.
-          res[:netzke_components] = comp_hash unless comp_hash.empty?
-
-          # Endpoints (besides the default "deliver_component" - JavaScript side already knows about it)
-          endpoints = self.class.endpoints.keys - [:deliver_component]
-          res[:endpoints] = endpoints unless endpoints.empty?
-
-          # Inform the JavaScript side if persistent_config is enabled
-          # res[:persistent_config] = persistence_enabled?
-
-          # Include our xtype
-          res[:xtype] = self.class.js_xtype
-
-          # Include our alias: Ext.createByAlias may be used to instantiate the component.
-          res[:alias] = self.class.js_alias
-
-          # Merge with the rest of config options, besides those that are only meant for the server side
-          res.merge!(config.reject{ |k,v| self.class.server_side_config_options.include?(k.to_sym) })
-
-          if config[:ext_config].present?
-            ::ActiveSupport::Deprecation.warn("Using ext_config option is deprecated. All config options must be specified at the same level in the hash.", caller)
-            res.merge!(config[:ext_config])
-          end
-
-          # Items (nested Ext/Netzke components)
-          res[:items] = items unless items.blank?
-
-          # So we can use getComponent(<component_name>) to retrieve a child component
-          res[:item_id] ||= name
-
-          res[:i18n] = js_translate_properties if js_translate_properties.present?
-
-          res[:netzke_plugins] = plugins.map{ |p| p.to_s.camelcase(:lower) } if plugins.present?
+        # Non-lazy-loaded components
+        comp_hash = {}
+        eager_loaded_components.each_pair do |comp_name, comp_config|
+          comp_instance = component_instance(comp_name.to_sym)
+          comp_instance.before_load
+          comp_hash[comp_name] = comp_instance.js_config
         end
+
+        # Configuration for all of our non-lazy-loaded children specified here. We can refer to them in +items+ so they get instantiated by Ext.
+        res[:netzke_components] = comp_hash unless comp_hash.empty?
+
+        # Endpoints (besides the default "deliver_component" - JavaScript side already knows about it)
+        endpoints = self.class.endpoints.keys - [:deliver_component]
+        res[:endpoints] = endpoints unless endpoints.empty?
+
+        # Inform the JavaScript side if persistent_config is enabled
+        # res[:persistent_config] = persistence_enabled?
+
+        # Include our xtype
+        res[:xtype] = self.class.js_xtype
+
+        # Include our alias: Ext.createByAlias may be used to instantiate the component.
+        res[:alias] = self.class.js_alias
+
+        # Merge with the rest of config options, besides those that are only meant for the server side
+        res.merge!(config.reject{ |k,v| self.class.server_side_config_options.include?(k.to_sym) })
+
+        if config[:ext_config].present?
+          ::ActiveSupport::Deprecation.warn("Using ext_config option is deprecated. All config options must be specified at the same level in the hash.", caller)
+          res.merge!(config[:ext_config])
+        end
+
+        # Items (nested Ext/Netzke components)
+        res[:items] = items unless items.blank?
+
+        # So we can use getComponent(<component_name>) to retrieve a child component
+        res[:item_id] ||= name
+
+        res[:i18n] = js_translate_properties if js_translate_properties.present?
+
+        res[:netzke_plugins] = plugins.map{ |p| p.to_s.camelcase(:lower) } if plugins.present?
       end
+    end
 
       # All the JS-code required by this instance of the component to be instantiated in the browser.
       # It includes JS-classes for the parents, non-lazy-loaded child components, and itself.
@@ -355,22 +369,21 @@ Netzke.cache.push('#{js_xtype}');
         code.blank? ? nil : code
       end
 
-      # DEPRECATED. Helper to access config[:ext_config].
-      def ext_config
-        ::ActiveSupport::Deprecation.warn("Using ext_config is deprecated. All config options must be specified at the same level in the hash.", caller)
-        config[:ext_config] || {}
+    # DEPRECATED. Helper to access config[:ext_config].
+    def ext_config
+      ::ActiveSupport::Deprecation.warn("Using ext_config is deprecated. All config options must be specified at the same level in the hash.", caller)
+      config[:ext_config] || {}
+    end
+
+    private
+
+      # Merges all the translations in the class hierarchy
+      def js_translate_properties
+        @js_translate_properties ||= self.class.class_ancestors.inject({}) do |r,klass|
+          hsh = klass.js_translate.keys.inject({}) { |h,t| h.merge(t => I18n.t("#{klass.i18n_id}.#{t}")) }
+          r.merge(hsh)
+        end
       end
 
-      private
-
-        # Merges all the translations in the class hierarchy
-        def js_translate_properties
-          @js_translate_properties ||= self.class.class_ancestors.inject({}) do |r,klass|
-            hsh = klass.js_translate.keys.inject({}) { |h,t| h.merge(t => I18n.t("#{klass.i18n_id}.#{t}")) }
-            r.merge(hsh)
-          end
-        end
-
-    end
   end
 end
