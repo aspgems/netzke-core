@@ -27,6 +27,10 @@ module Netzke
       class_attribute :registered_components
       self.registered_components = []
 
+      # All attributes that this component may accept from the request
+      class_attribute :request_attributes
+      self.request_attributes = []
+
       # Loads a component on browser's request. Every Netzke component gets this endpoint.
       # <tt>params</tt> should contain:
       # * <tt>:cache</tt> - an array of component classes cached at the browser
@@ -57,14 +61,7 @@ module Netzke
     module ClassMethods
       # Defines attributes that this component may accept from the request
       def attr_request(*args)
-        current_attrs = read_inheritable_attribute(:request_attributes) || []
-        current_attrs.concat args
-        write_inheritable_attribute(:request_attributes, current_attrs.uniq)
-      end
-
-      # All attributes that this component may accept from the request
-      def request_attributes
-        read_inheritable_attribute(:request_attributes) || []
+        self.request_attributes += args
       end
 
       # Defines a nested component.
